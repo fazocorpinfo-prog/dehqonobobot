@@ -16,6 +16,7 @@ Telegram Web App orqali xatmi Qur'on jarayonini raqamlashtirish, motivatsiya va 
 - SOS - vazifani kamaytirish (qolganlar zaxiraga)
 - Raqamli bog' (gamification - daraxt o'sishi/qurib qolishi)
 - Leaderboard (haftalik / oylik / yosh bo'yicha)
+- Sertifikat (PDF) — xatm tugaganda top-10 qoriga avtomatik beriladi, foydalanuvchi profilidan yuklab oladi
 - E'lonlar peshtaxtasi + xayriya kartalari
 - Challenge (1 haftada 1 mln Istig'for kabi)
 - Namoz vaqtlari + eslatma

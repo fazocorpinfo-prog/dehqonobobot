@@ -14,8 +14,14 @@ async function main() {
     console.log(`[api] http://localhost:${config.port} da ishlayapti`);
   });
 
-  await bot.launch();
-  console.log('[bot] Telegram bot ishga tushdi');
+  bot
+    .launch()
+    .then(() => console.log('[bot] Telegram bot ishga tushdi'))
+    .catch((e) => {
+      console.warn(
+        `[bot] launch fail (BOT_TOKEN dummy bo'lishi mumkin): ${e?.message ?? e}. API ishlashda davom etadi.`
+      );
+    });
 
   startScheduler(bot);
   console.log('[scheduler] Scheduler ishga tushdi');

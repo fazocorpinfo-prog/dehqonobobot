@@ -48,6 +48,29 @@ export const api = {
   articles: (category?: string) =>
     http<{ articles: any[] }>(`/articles${category ? `?category=${category}` : ''}`),
   verseOfDay: () => http<{ verse: any | null }>('/verse-of-day'),
+  certificates: () =>
+    http<{ certificates: Array<{ id: number; title: string; rank: number | null; awarded_at: string; khatm_id: number | null }> }>(
+      '/certificates'
+    ),
+  downloadCertificate: async (id: number) => {
+    const initData = getInitData();
+    const tgUser = getTelegramUser();
+    const headers: Record<string, string> = {
+      ...(initData ? { 'X-Telegram-Init-Data': initData } : {}),
+      ...(tgUser ? { 'X-Telegram-Id': String(tgUser.id) } : {}),
+    };
+    const res = await fetch(`${BASE}/certificates/${id}/pdf`, { headers });
+    if (!res.ok) throw new Error(`PDF download failed: ${res.status}`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sertifikat-${id}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
   // admin
   admin: {
     stats: () => http<{ stats: any }>('/admin/stats'),
@@ -64,5 +87,16 @@ export const api = {
     setPrayerTimes: (items: any[]) =>
       http('/admin/prayer-times', { method: 'POST', body: JSON.stringify({ items }) }),
     reserve: () => http<{ reserve: any[] }>('/admin/reserve'),
+    awardCertificates: (khatmId: number, topN = 10) =>
+      http<{ ok: boolean; awarded: number; certificates: any[] }>(
+        '/admin/certificates/award',
+        { method: 'POST', body: JSON.stringify({ khatmId, topN }) }
+      ),
+    previewTop: (khatmId: number, topN = 10) =>
+      http<{ top: any[] }>(`/admin/certificates/preview?khatmId=${khatmId}&topN=${topN}`),
+    certificates: (khatmId?: number) =>
+      http<{ certificates: any[] }>(
+        `/admin/certificates${khatmId ? `?khatmId=${khatmId}` : ''}`
+      ),
   },
 };

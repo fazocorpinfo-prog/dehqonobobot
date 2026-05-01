@@ -35,9 +35,19 @@ export function getInitData(): string {
 }
 
 export function getTelegramUser() {
-  return tg()?.initDataUnsafe?.user as
-    | { id: number; first_name?: string; last_name?: string; username?: string }
-    | undefined;
+  const real = tg()?.initDataUnsafe?.user;
+  if (real) return real as { id: number; first_name?: string; last_name?: string; username?: string };
+  // Dev rejim: brauzerdan ?tgid=... bilan kirish (faqat localhost'da test uchun)
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    const stored = localStorage.getItem('dev_tgid');
+    const id = params.get('tgid') ?? stored;
+    if (id) {
+      if (params.get('tgid')) localStorage.setItem('dev_tgid', id);
+      return { id: Number(id), first_name: 'Dev' };
+    }
+  }
+  return undefined;
 }
 
 export function haptic(style: 'light' | 'medium' | 'heavy' = 'light') {

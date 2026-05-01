@@ -15,6 +15,12 @@ import {
 import { assignTaskToUser, reduceTaskBySOS, reassignTask } from './distribution';
 import { pageRangeLabel } from './quran';
 import { todayLocalDate } from './utils';
+import {
+  Certificates,
+  awardCertificatesForKhatm,
+  renderCertificatePdf,
+  topReadersForKhatm,
+} from './certificates';
 
 export function createApi(_bot: Telegraf<any>) {
   const app = express();
@@ -392,6 +398,87 @@ export function createApi(_bot: Telegraf<any>) {
     if (!k) return res.json({ reserve: [] });
     res.json({ reserve: Reserve.available(k.id) });
   });
+
+  // ============== SERTIFIKATLAR ==============
+
+  // Foydalanuvchining sertifikatlari ro'yxati
+  app.get('/api/certificates', telegramAuth(), (req: AuthedRequest, res) => {
+    if (!req.authUser) return res.status(401).json({ error: 'unauth' });
+    res.json({ certificates: Certificates.forUser(req.authUser.id) });
+  });
+
+  // Sertifikat PDF yuklab olish
+  app.get('/api/certificates/:id/pdf', telegramAuth(), (req: AuthedRequest, res) => {
+    if (!req.authUser) return res.status(401).json({ error: 'unauth' });
+    const id = Number(req.params.id);
+    const cert = Certificates.byId(id);
+    if (!cert) return res.status(404).json({ error: 'not_found' });
+    if (cert.user_id !== req.authUser.id && !req.isAdmin) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+    const user = Users.byId(cert.user_id);
+    if (!user) return res.status(404).json({ error: 'user_not_found' });
+    const khatm = cert.khatm_id ? Khatms.byId(cert.khatm_id) : null;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="sertifikat-${cert.id}.pdf"`
+    );
+    const doc = renderCertificatePdf(cert, user, khatm ?? null);
+    doc.pipe(res);
+    doc.end();
+  });
+
+  // Admin: aktiv yoki tugagan xatm uchun top-N foydalanuvchilarga sertifikat berish
+  app.post(
+    '/api/admin/certificates/award',
+    telegramAuth({ adminOnly: true }),
+    (req, res) => {
+      const { khatmId, topN } = req.body ?? {};
+      const id = Number(khatmId);
+      if (!id) return res.status(400).json({ error: 'invalid' });
+      const created = awardCertificatesForKhatm(id, Number(topN) || 10);
+      res.json({ ok: true, awarded: created.length, certificates: created });
+    }
+  );
+
+  // Admin: top o'quvchilar (sertifikat berishdan oldin ko'rib chiqish uchun)
+  app.get(
+    '/api/admin/certificates/preview',
+    telegramAuth({ adminOnly: true }),
+    (req, res) => {
+      const khatmId = Number(req.query.khatmId);
+      const topN = Number(req.query.topN) || 10;
+      if (!khatmId) return res.status(400).json({ error: 'invalid' });
+      res.json({ top: topReadersForKhatm(khatmId, topN) });
+    }
+  );
+
+  // Admin: barcha berilgan sertifikatlar
+  app.get(
+    '/api/admin/certificates',
+    telegramAuth({ adminOnly: true }),
+    (req, res) => {
+      const khatmId = req.query.khatmId ? Number(req.query.khatmId) : null;
+      const rows = khatmId
+        ? getDb()
+            .prepare(
+              `SELECT c.*, u.first_name, u.last_name FROM certificates c
+               JOIN users u ON u.id = c.user_id
+               WHERE c.khatm_id = ? ORDER BY c.rank ASC`
+            )
+            .all(khatmId)
+        : getDb()
+            .prepare(
+              `SELECT c.*, u.first_name, u.last_name FROM certificates c
+               JOIN users u ON u.id = c.user_id
+               ORDER BY c.awarded_at DESC LIMIT 200`
+            )
+            .all();
+      res.json({ certificates: rows });
+    }
+  );
 
   return app;
 }

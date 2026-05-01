@@ -4,6 +4,7 @@ import { config } from './config';
 import { getDb } from './db';
 import { Users, Garden, DailyReports } from './db/models';
 import { todayLocalDate, formatPersonName } from './utils';
+import { awardCertificatesForKhatm } from './certificates';
 
 /**
  * Har kuni kerakli holatlarda eslatma yuboradi.
@@ -19,8 +20,8 @@ export function startScheduler(bot: Telegraf<any>) {
     await sendEveningReminders(bot);
   });
 
-  // Har 6 soatda namoz vaqti tekshiruvi (oddiy versiya)
-  cron.schedule('0 4,12,15,18,20 * * *', async () => {
+  // Har daqiqada namoz vaqtini tekshiramiz (HH:MM aniqligida match)
+  cron.schedule('* * * * *', async () => {
     await checkPrayerTimes(bot);
   });
 
@@ -28,6 +29,52 @@ export function startScheduler(bot: Telegraf<any>) {
   cron.schedule('5 0 * * *', async () => {
     await dailyMaintenance(bot);
   });
+
+  // Har soatda — tugagan xatmlarni completed deb belgilash va top-10 ga sertifikat berish
+  cron.schedule('15 * * * *', async () => {
+    await checkExpiredKhatms(bot);
+  });
+}
+
+async function checkExpiredKhatms(bot: Telegraf<any>) {
+  const db = getDb();
+  const expired = db
+    .prepare(
+      `SELECT * FROM khatms WHERE status = 'active' AND ends_at <= datetime('now')`
+    )
+    .all() as Array<{ id: number; title: string }>;
+  for (const k of expired) {
+    db.prepare(`UPDATE khatms SET status = 'completed' WHERE id = ?`).run(k.id);
+    const awarded = awardCertificatesForKhatm(k.id, 10);
+    console.log(
+      `[scheduler] Xatm tugadi: ${k.title} (id=${k.id}), ${awarded.length} ta sertifikat berildi`
+    );
+    // Sertifikat olganlarga xabar yuboramiz
+    for (const cert of awarded) {
+      const u = Users.byId(cert.user_id);
+      if (!u) continue;
+      try {
+        await bot.telegram.sendMessage(
+          u.telegram_id,
+          `🎉 Tabriklaymiz! Siz "${k.title}" xatmi yakunida ${cert.rank}-o'rinni egalladingiz.\n\n📜 Sertifikatingizni Web App > Profil bo'limidan yuklab olishingiz mumkin.`
+        );
+      } catch {
+        /* skip */
+      }
+    }
+    // Adminga yakuniy hisobot
+    for (const adminTgId of config.adminIds) {
+      try {
+        await bot.telegram.sendMessage(
+          adminTgId,
+          `✅ Xatm yakunlandi: *${k.title}*\nTop-${awarded.length} foydalanuvchiga sertifikat berildi.`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch {
+        /* skip */
+      }
+    }
+  }
 }
 
 async function sendDailyReminders(bot: Telegraf<any>) {
