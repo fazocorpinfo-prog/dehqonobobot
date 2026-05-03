@@ -29,6 +29,7 @@ export function createApi(_bot: Telegraf<any>) {
 
   // Health
   app.get('/api/health', (_req, res) => res.json({ ok: true }));
+  app.get('/healthz', (_req, res) => res.json({ ok: true }));
 
   // ============== USER ==============
 

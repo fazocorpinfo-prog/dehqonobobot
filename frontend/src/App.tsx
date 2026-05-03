@@ -36,8 +36,17 @@ export default function App() {
 
   if (user === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-emerald-700 animate-pulse">Yuklanyapti...</div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="w-16 h-16 rounded-3xl bg-gradient-hero text-white flex items-center justify-center text-3xl shadow-card animate-pulse">
+          🕌
+        </div>
+        <div>
+          <div className="text-lg font-bold text-emerald-900">Xatmi Qur'on</div>
+          <div className="text-sm text-emerald-700/80 mt-0.5">Yuklanyapti...</div>
+        </div>
+        <div className="w-32 h-1.5 rounded-full bg-emerald-100 overflow-hidden">
+          <div className="h-full w-1/2 bg-gradient-to-r from-emerald-400 to-emerald-600 animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+        </div>
       </div>
     );
   }

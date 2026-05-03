@@ -5,7 +5,7 @@
   "description": "Dehqonbobo Jome masjidi - Xatmi Qur'on Telegram Web App backend",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && mkdir -p dist/db && cp src/db/schema.sql dist/db/schema.sql",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "db:init": "tsx src/db/init.ts",

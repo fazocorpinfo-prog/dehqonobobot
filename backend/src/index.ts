@@ -1,11 +1,26 @@
 import { config } from './config';
-import { initDatabase } from './db';
+import { initDatabase, getDb } from './db';
 import { createBot } from './bot';
 import { createApi } from './api';
 import { startScheduler } from './scheduler';
 
 async function main() {
   initDatabase();
+
+  // Production'da DB bo'sh bo'lsa, demo data avtomatik yuklanadi
+  if (process.env.AUTO_SEED !== 'false') {
+    const db = getDb();
+    const userCount = (db.prepare(`SELECT COUNT(*) AS c FROM users WHERE role='user'`).get() as any).c;
+    if (userCount === 0) {
+      console.log('[seed] DB bo\'sh — demo data yuklanmoqda...');
+      try {
+        await import('./db/seed-runtime');
+        console.log('[seed] Tayyor');
+      } catch (e: any) {
+        console.warn('[seed] xato:', e?.message ?? e);
+      }
+    }
+  }
 
   const bot = createBot();
   const app = createApi(bot);

@@ -2,40 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --tg-bg: #f6fbf8;
+  --tg-text: #064e3b;
+  color-scheme: light;
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(251, 191, 36, 0.10), transparent 60%),
+    radial-gradient(900px 600px at -10% 0%, rgba(16, 185, 129, 0.18), transparent 55%),
+    linear-gradient(180deg, #f6fbf8 0%, #ffffff 60%);
   color: #064e3b;
+  min-height: 100vh;
+  overscroll-behavior-y: none;
 }
 
+/* Subtle Islamic geometric pattern overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(6, 95, 70, 0.05) 1px, transparent 0);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0) 60%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0) 60%);
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ====== Buttons ====== */
 .btn-primary {
-  @apply bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-xl font-medium transition;
+  @apply inline-flex items-center justify-center gap-2 bg-gradient-to-br from-emerald-500 to-emerald-700 hover:from-emerald-600 hover:to-emerald-800 active:scale-[0.98] text-white px-4 py-3 rounded-2xl font-semibold shadow-soft transition-all disabled:opacity-50 disabled:cursor-not-allowed;
 }
 .btn-ghost {
-  @apply bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 px-4 py-2.5 rounded-xl font-medium transition;
+  @apply inline-flex items-center justify-center gap-2 bg-white text-emerald-800 border border-emerald-200/70 hover:bg-emerald-50 active:scale-[0.98] px-4 py-3 rounded-2xl font-medium transition-all;
 }
-.card {
-  @apply bg-white rounded-2xl shadow-sm border border-emerald-100 p-4;
+.btn-gold {
+  @apply inline-flex items-center justify-center gap-2 bg-gradient-gold text-white px-4 py-3 rounded-2xl font-semibold shadow-gold active:scale-[0.98] transition-all;
 }
-.tile {
-  @apply card flex flex-col items-center justify-center gap-2 text-center hover:shadow-md transition;
-}
-.input {
-  @apply w-full bg-white border border-emerald-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-emerald-300 focus:outline-none;
-}
-.title {
-  @apply text-xl font-bold text-emerald-900;
-}
-.subtitle {
-  @apply text-sm text-emerald-700;
+.btn-soft {
+  @apply inline-flex items-center justify-center gap-2 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 px-3 py-2 rounded-xl text-sm font-medium transition-colors;
 }
 
-.scroll-area {
-  scroll-behavior: smooth;
+/* ====== Cards ====== */
+.card {
+  @apply bg-white/90 backdrop-blur-md rounded-3xl shadow-card border border-emerald-100/70 p-5;
 }
+.card-flat {
+  @apply bg-white rounded-2xl border border-emerald-100/70 p-4;
+}
+.tile {
+  @apply card flex flex-col items-center justify-center gap-2 text-center hover:shadow-soft transition;
+}
+
+/* ====== Inputs ====== */
+.input {
+  @apply w-full bg-white border border-emerald-200/70 rounded-2xl px-4 py-3 text-emerald-900 placeholder:text-emerald-400/70 focus:ring-4 focus:ring-emerald-200/60 focus:border-emerald-400 focus:outline-none transition;
+}
+.label {
+  @apply text-xs font-semibold text-emerald-800/80 uppercase tracking-wide;
+}
+
+/* ====== Typography ====== */
+.title {
+  @apply text-xl font-bold text-emerald-950 tracking-tight;
+}
+.subtitle {
+  @apply text-sm text-emerald-700/80;
+}
+.eyebrow {
+  @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-600/80;
+}
+
+/* ====== Chips ====== */
+.chip {
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold;
+}
+.chip-emerald { @apply chip bg-emerald-100 text-emerald-800; }
+.chip-gold    { @apply chip bg-gold-100 text-gold-700; }
+.chip-rose    { @apply chip bg-rose-100 text-rose-700; }
+
+/* ====== Progress ring helper ====== */
+.ring-bg {
+  background: conic-gradient(#10b981 var(--p, 0%), rgba(16, 185, 129, 0.12) 0);
+}
+
+/* ====== Shimmer loading ====== */
+.skeleton {
+  background: linear-gradient(90deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.18) 50%, rgba(16,185,129,0.08) 100%);
+  background-size: 200% 100%;
+  @apply animate-shimmer rounded-xl;
+}
+
+/* ====== Bottom-nav active pill ====== */
+.nav-pill {
+  @apply absolute -top-1.5 left-1/2 -translate-x-1/2 h-1 w-8 rounded-full bg-emerald-500;
+}
+
+/* Scrollable areas keep momentum on iOS */
+.scroll-area { -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+
+/* Hide scrollbars on horizontal carousels */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Arabic */
+.arabic {
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  direction: rtl;
+  line-height: 2;
+}
+
+/* Safe area insets for Telegram WebApp full-screen */
+.safe-top    { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
